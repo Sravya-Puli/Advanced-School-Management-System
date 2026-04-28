@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSmart AI - Teacher Panel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sidebar-bg: #1a1f2e;
+    --accent: #2dd4bf;
+    --accent-dark: #14b8a6;
+    --main-bg: #f4f6fb;
+    --card-bg: #ffffff;
+    --text-primary: #1a1f2e;
+    --text-secondary: #7a8599;
+    --border: #e8ecf4;
+    --shadow: 0 2px 14px rgba(30,40,80,0.07);
+    --ai-w: 380px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--main-bg); display: flex; min-height: 100vh; color: var(--text-primary); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 150px; min-height: 100vh; background: var(--sidebar-bg);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+  }
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 9px;
+    padding: 18px 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .brand-icon {
+    width: 32px; height: 32px; background: linear-gradient(135deg,#2dd4bf,#14b8a6);
+    border-radius: 8px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;
+  }
+  .brand-text .name { color:#fff; font-weight:700; font-size:13px; }
+  .brand-text .sub  { color:#a0aab8; font-size:10px; margin-top:1px; }
+  .sidebar-nav { flex:1; padding:16px 0; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; color:#a0aab8; font-size:13px; font-weight:500;
+    cursor:pointer; text-decoration:none; transition:all .15s;
+  }
+  .nav-item:hover { color:#fff; background:rgba(255,255,255,0.06); }
+  .nav-item.active {
+    color:#fff; background:#2d3448; border-radius:8px;
+    margin:0 8px; padding:10px 10px; width:calc(100% - 16px); position:relative;
+  }
+  .nav-item.active::before {
+    content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    height:55%; width:3px; background:var(--accent); border-radius:0 3px 3px 0;
+  }
+  .nav-icon { font-size:15px; width:20px; text-align:center; }
+
+  /* ── LAYOUT ── */
+  .layout { margin-left:150px; flex:1; display:flex; min-height:100vh; transition:margin-right .35s cubic-bezier(.4,0,.2,1); }
+  .layout.ai-open { margin-right: var(--ai-w); }
+  .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background:#fff; border-bottom:1px solid var(--border);
+    padding:12px 26px; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:50;
+  }
+  .topbar h2 { font-size:15px; font-weight:600; }
+  .topbar-right { display:flex; align-items:center; gap:14px; }
+  .notif-btn { position:relative; background:none; border:none; cursor:pointer; font-size:18px; display:flex; align-items:center; }
+  .notif-badge {
+    position:absolute; top:-4px; right:-5px;
+    background:#e85d5d; color:#fff; font-size:9px; font-weight:700;
+    min-width:15px; height:15px; border-radius:99px;
+    display:flex; align-items:center; justify-content:center; border:2px solid #fff;
+  }
+  .logout-btn { background:none; border:none; cursor:pointer; font-size:18px; color:#7a8599; }
+
+  /* ── CONTENT ── */
+  .content { padding:22px 26px; flex:1; }
+  .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; }
+  .page-title { font-size:19px; font-weight:700; }
+  .page-sub { font-size:12.5px; color:var(--text-secondary); margin-top:2px; }
+  .grade-select {
+    padding:7px 28px 7px 12px; border:1.5px solid var(--border);
+    border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500;
+    background:#fff; color:var(--text-primary); cursor:pointer; outline:none; appearance:none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8599' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+  .stat-card {
+    background:linear-gradient(135deg,#e8f8f5 0%,#f0fbf9 100%);
+    border:1px solid #c8eee9; border-radius:12px; padding:16px 18px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+  }
+  .stat-label { font-size:11.5px; color:var(--text-secondary); font-weight:500; margin-bottom:5px; }
+  .stat-value { font-size:21px; font-weight:700; }
+  .stat-value.subject { font-size:17px; }
+  .stat-icon { font-size:19px; }
+
+  /* ── CARD ── */
+  .card { background:var(--card-bg); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:14px; }
+  .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .card-title { font-size:14px; font-weight:600; }
+  .chart-wrap { height:190px; }
+
+  /* ── ATTENDANCE ── */
+  .attendance-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .attend-item {
+    border:1.5px solid var(--border); border-radius:8px;
+    padding:10px 13px; display:flex; align-items:center; gap:9px;
+    font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; user-select:none;
+  }
+  .attend-item.present { border-color:var(--accent); background:#e8faf8; color:var(--accent-dark); }
+
+  /* ── BTN ── */
+  .btn-teal {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--accent); color:#fff; border:none; border-radius:8px;
+    padding:8px 14px; font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:600;
+    cursor:pointer; transition:background .15s; white-space:nowrap;
+  }
+  .btn-teal:hover { background:var(--accent-dark); }
+
+  /* ── MARKS TABLE ── */
+  .marks-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .marks-table thead th {
+    text-align:left; color:var(--text-secondary); font-size:11px;
+    font-weight:600; text-transform:uppercase; letter-spacing:.4px;
+    padding:0 6px 9px 0; border-bottom:1px solid var(--border);
+  }
+  .marks-table thead th:first-child { padding-left:0; }
+  .marks-table tbody tr { border-bottom:1px solid var(--border); }
+  .marks-table tbody tr:last-child { border-bottom:none; }
+  .marks-table tbody td { padding:10px 6px; }
+  .marks-table tbody td:first-child { font-weight:500; padding-left:0; }
+  .mark-input {
+    width:48px; padding:4px 6px; border:1.5px solid var(--border);
+    border-radius:6px; font-family:'DM Sans',sans-serif; font-size:13px;
+    font-weight:500; text-align:center; outline:none; transition:border .15s;
+  }
+  .mark-input:focus { border-color:var(--accent); }
+
+  /* ── AI SUGGESTION BOX ── */
+  .ai-box { display:flex; align-items:flex-start; gap:10px; font-size:13px; color:var(--text-secondary); }
+  .ai-emoji { font-size:17px; margin-top:1px; }
+
+  /* ══════════════════════════
+     AI PANEL
+  ══════════════════════════ */
+  .ai-panel {
+    width: var(--ai-w); height:100vh;
+    background:#fff; border-left:1px solid var(--border);
+    display:flex; flex-direction:column;
+    position:fixed; top:0; right:0; bottom:0; z-index:150;
+    transform:translateX(100%);
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+    box-shadow:-6px 0 30px rgba(30,40,80,0.10);
+  }
+  .ai-panel.open { transform:translateX(0); }
+
+  /* header */
+  .aip-header {
+    padding:15px 18px; flex-shrink:0;
+    background:linear-gradient(135deg,#1a1f2e 0%,#2a3250 100%);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .aip-title { display:flex; align-items:center; gap:11px; }
+  .aip-avatar {
+    width:36px; height:36px; background:linear-gradient(135deg,#2dd4bf,#14b8a6);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:17px; flex-shrink:0;
+  }
+  .aip-name { color:#fff; font-size:14px; font-weight:700; }
+  .aip-sub  { color:#a0aab8; font-size:11px; margin-top:1px; }
+  .aip-close {
+    background:rgba(255,255,255,0.12); border:none; color:#fff;
+    width:28px; height:28px; border-radius:50%; cursor:pointer;
+    font-size:14px; display:flex; align-items:center; justify-content:center;
+    transition:background .15s;
+  }
+  .aip-close:hover { background:rgba(255,255,255,0.22); }
+
+  /* student selector */
+  .aip-selector {
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    background:#fafbfd; flex-shrink:0;
+    display:flex; align-items:center; gap:8px;
+  }
+  .aip-selector label { font-size:12px; color:var(--text-secondary); font-weight:500; white-space:nowrap; }
+  .aip-sel {
+    flex:1; padding:6px 22px 6px 10px; border:1.5px solid var(--border);
+    border-radius:7px; font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500;
+    background:#fff; color:var(--text-primary); cursor:pointer; outline:none; appearance:none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a8599' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 8px center;
+  }
+  .aip-sel:focus { border-color:var(--accent); }
+
+  /* quick chips */
+  .aip-chips {
+    padding:10px 14px 8px; border-bottom:1px solid var(--border);
+    display:flex; flex-wrap:wrap; gap:6px; flex-shrink:0; background:#fafbfd;
+  }
+  .chip {
+    padding:5px 10px; border-radius:99px; border:1.5px solid var(--border);
+    background:#fff; color:var(--text-secondary); font-size:11.5px; font-weight:500;
+    cursor:pointer; transition:all .15s; white-space:nowrap;
+  }
+  .chip:hover { border-color:var(--accent); color:var(--accent-dark); background:#e8faf8; }
+
+  /* messages */
+  .aip-messages {
+    flex:1; overflow-y:auto; padding:14px;
+    display:flex; flex-direction:column; gap:12px;
+    scroll-behavior:smooth;
+  }
+  .msg { display:flex; gap:9px; align-items:flex-start; animation:fadeUp .25s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+  .msg.user { flex-direction:row-reverse; }
+  .msg-av {
+    width:28px; height:28px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:#fff;
+  }
+  .msg-av.bot { background:linear-gradient(135deg,#2dd4bf,#14b8a6); font-size:14px; }
+  .msg-av.usr { background:#6366f1; font-size:10.5px; }
+  .msg-bub {
+    max-width:85%; padding:10px 13px; border-radius:12px;
+    font-size:13px; line-height:1.58;
+  }
+  .msg.ai .msg-bub {
+    background:#f4f6fb; border:1px solid var(--border);
+    color:var(--text-primary); border-top-left-radius:3px;
+  }
+  .msg.user .msg-bub {
+    background:linear-gradient(135deg,#2dd4bf,#14b8a6);
+    color:#fff; border-top-right-radius:3px;
+  }
+  .msg-bub strong { font-weight:700; }
+  .msg-bub ul { padding-left:16px; margin:5px 0 3px; }
+  .msg-bub li { margin-bottom:3px; }
+
+  /* typing */
+  .typing-dots { display:flex; gap:4px; padding:3px 0; }
+  .typing-dots span {
+    width:7px; height:7px; border-radius:50%; background:#2dd4bf;
+    animation:bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2){animation-delay:.2s}
+  .typing-dots span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+  /* input */
+  .aip-input-area {
+    padding:12px 14px; border-top:1px solid var(--border);
+    display:flex; gap:8px; align-items:flex-end; flex-shrink:0; background:#fff;
+  }
+  .aip-input {
+    flex:1; padding:9px 12px; border:1.5px solid var(--border);
+    border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px;
+    resize:none; outline:none; line-height:1.45; max-height:100px;
+    transition:border .15s;
+  }
+  .aip-input:focus { border-color:var(--accent); }
+  .aip-send {
+    width:36px; height:36px; background:var(--accent); border:none; border-radius:9px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:15px; flex-shrink:0; transition:background .15s;
+  }
+  .aip-send:hover { background:var(--accent-dark); }
+  .aip-send:disabled { background:#b2e8e2; cursor:not-allowed; }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:22px; right:26px; z-index:999;
+    background:#1a1f2e; color:#fff; padding:11px 18px;
+    border-radius:10px; font-size:13px; font-weight:500;
+    box-shadow:0 4px 20px rgba(0,0,0,.22);
+    opacity:0; transform:translateY(10px); transition:all .3s; pointer-events:none;
+  }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-thumb { background:#d0d8ea; border-radius:99px; }
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text">
+      <div class="name">EduSmart AI</div>
+      <div class="sub">Teacher Panel</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" id="navDash" onclick="navDashClick(event)">
+      <span class="nav-icon">⊞</span> Dashboard
+    </a>
+    <a class="nav-item" id="navAI" onclick="navAIClick(event)">
+      <span class="nav-icon">🤖</span> AI Assistant
+    </a>
+  </nav>
+</aside>
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout" id="layout">
+  <div class="main">
+
+    <header class="topbar">
+      <h2 id="welcomeName">Welcome, Teacher</h2>
+      <div class="topbar-right">
+        <button class="notif-btn">🔔<span class="notif-badge">2</span></button>
+        <button class="logout-btn" onclick="logout()">⎋</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Teacher Dashboard</div>
+          <div class="page-sub" id="welcomeSub">Welcome, Teacher</div>
+        </div>
+        <select class="grade-select" id="gradeSelect" onchange="switchGrade(this.value)">
+          <!-- Classes will be loaded dynamically -->
+        </select>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div><div class="stat-label">My Classes</div><div class="stat-value" id="myClasses">0</div></div>
+          <div class="stat-icon">📖</div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-label">Class Students</div><div class="stat-value" id="classStudents">0</div></div>
+          <div class="stat-icon">👁️</div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-label">Subject</div><div class="stat-value subject" id="subjectName">Subject</div></div>
+          <div class="stat-icon">📈</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Class Average by Subject</div></div>
+        <div class="chart-wrap"><canvas id="subjectChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Weekly Class Attendance</div></div>
+        <div class="chart-wrap"><canvas id="weeklyAttendanceChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Mark Attendance — Today</div>
+          <button class="btn-teal" onclick="saveAttendance()">💾 Save Attendance</button>
+        </div>
+        <div class="attendance-grid" id="attendanceGrid">
+          <!-- Data will be loaded here -->
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Enter / Edit Marks</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-teal" id="editBtn" onclick="toggleEditMode(true)">✏️ Edit Marks</button>
+            <button class="btn-teal" id="addStudentBtn" onclick="addStudentRow()" style="display:none; background:#6366f1;">➕ Add Student</button>
+            <button class="btn-teal" id="saveMarksBtn" onclick="saveMarks()" style="display:none;">💾 Save Marks</button>
+            <button class="btn-teal" id="cancelBtn" onclick="toggleEditMode(false)" style="display:none; background:#7a8599;">✕ Cancel</button>
+          </div>
+        </div>
+        <table class="marks-table">
+          <thead>
+            <tr>
+              <th style="min-width:130px">Student</th>
+              <th>Telugu</th><th>Hindi</th><th>English</th>
+              <th>Maths</th><th>Science</th><th>Social</th>
+              <th class="edit-only" style="display:none;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="marksBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">AI Suggestions for Weak Students</div>
+          <button class="btn-teal" onclick="openAIWithContext()">🤖 Ask AI Assistant</button>
+        </div>
+        <div class="ai-box">
+          <span class="ai-emoji" id="aiEmoji">🔥</span>
+          <span id="aiText">No at-risk students in this class. Great job!</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ AI PANEL ══ -->
+<div class="ai-panel" id="aiPanel">
+
+  <div class="aip-header">
+    <div class="aip-title">
+      <div class="aip-avatar">🤖</div>
+      <div>
+        <div class="aip-name">EduSmart AI Assistant</div>
+        <div class="aip-sub">Student Analysis &amp; Predictions</div>
+      </div>
+    </div>
+    <button class="aip-close" onclick="closeAI()">✕</button>
+  </div>
+
+  <div class="aip-selector">
+    <label>Focus on:</label>
+    <select class="aip-sel" id="aiStudentSel">
+      <option value="all">All Students (Current Class)</option>
+    </select>
+  </div>
+
+  <div class="aip-chips">
+    <span class="chip" onclick="quickAsk('Analyze overall performance and give detailed insights')">📊 Performance Analysis</span>
+    <span class="chip" onclick="quickAsk('Predict final exam score based on current marks and attendance')">🎯 Score Prediction</span>
+    <span class="chip" onclick="quickAsk('Identify weak subjects and root causes')">⚠️ Weak Subjects</span>
+    <span class="chip" onclick="quickAsk('Give personalized improvement tips and study strategies')">💡 Improvement Tips</span>
+    <span class="chip" onclick="quickAsk('Compare performance with class average and rank')">📈 Class Comparison</span>
+    <span class="chip" onclick="quickAsk('Analyze attendance impact on academic performance')">📅 Attendance Impact</span>
+    <span class="chip" onclick="quickAsk('Suggest activities or projects to boost engagement')">🎨 Engagement Ideas</span>
+  </div>
+
+  <div class="aip-messages" id="aipMessages">
+    <div class="msg ai">
+      <div class="msg-av bot">🤖</div>
+      <div class="msg-bub">
+        👋 <strong>Hello, Dr. Sunita Rao!</strong><br><br>
+        I'm your AI teaching assistant. I have full access to your students' marks, attendance, and performance data.<br><br>
+        I can help you:<br>
+        <ul>
+          <li>Analyze individual student performance</li>
+          <li>Predict exam outcomes &amp; trends</li>
+          <li>Identify weak areas &amp; root causes</li>
+          <li>Suggest personalized improvement plans</li>
+        </ul>
+        <br>Select a student above or use the quick chips to get started! 🚀
+      </div>
+    </div>
+  </div>
+
+  <div class="aip-input-area">
+    <textarea class="aip-input" id="aipInput" placeholder="Ask about a student or your class…" rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+    <button class="aip-send" id="aipSendBtn" onclick="sendMsg()">➤</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+//  DATA
+// ══════════════════════════════════
+
+
+const subjects = ['Telugu','Hindi','English','Maths','Science','Social'];
+let currentGrade = '1A';
+let attendance = {};
+let chart = null;
+let aiOpen = false;
+let isTyping = false;
+let chatHistory = [];
+let currentStudentsData = [];
+
+// ══════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════
+let currentClass = '1A';
+let isEditMode = false;
+
+// Initialize teacher data from localStorage
+function initTeacher() {
+  const teacherData = JSON.parse(localStorage.getItem("teacherData"));
+  if (teacherData) {
+    document.getElementById("welcomeName").innerText = `Welcome, ${teacherData.name}`;
+    document.getElementById("welcomeSub").innerText = `Welcome, ${teacherData.name}`;
+    document.getElementById("subjectName").innerText = teacherData.subject;
+    document.getElementById("myClasses").innerText = teacherData.classes.length;
+
+    const gradeSelect = document.getElementById("gradeSelect");
+    gradeSelect.innerHTML = "";
+    teacherData.classes.forEach(cls => {
+      const option = document.createElement("option");
+      option.value = cls;
+      option.textContent = `Grade ${cls}`;
+      gradeSelect.appendChild(option);
+    });
+
+    if (teacherData.classes.length > 0) {
+      currentClass = teacherData.classes[0];
+      loadStudents();
+    }
+  } else {
+    // If no teacher data (e.g. direct access), redirect to login
+    window.location.href = "/";
+  }
+}
+
+function switchGrade(className) {
+  currentClass = className;
+  loadStudents();
+  toggleEditMode(false);
+}
+
+function loadStudents() {
+  fetch(`/get_students_by_class/${currentClass}`)
+    .then(res => res.json())
+    .then(data => {
+      currentStudentsData = data;
+      const tbody = document.getElementById("marksBody");
+      const attendanceGrid = document.getElementById("attendanceGrid");
+
+      tbody.innerHTML = "";
+      attendanceGrid.innerHTML = "";
+
+      const totals = { telugu: 0, hindi: 0, english: 0, maths: 0, science: 0, social: 0 };
+      const count = data.length;
+
+      data.forEach(student => {
+        // Attendance UI
+        const isPresent = student.today_attendance === 'Present' || student.today_attendance === 'N/A';
+        attendanceGrid.innerHTML += `
+          <div class="attend-item ${isPresent ? 'present' : 'absent'}" 
+               data-id="${student.id}" 
+               onclick="toggleAttendance(this)">
+            ${isPresent ? '✅' : '❌'} ${student.name}
+          </div>
+        `;
+
+        // Marks table
+        tbody.innerHTML += `
+          <tr data-id="${student.id}">
+            <td><input type="text" class="mark-input" value="${student.name}" style="width:120px; text-align:left;" disabled></td>
+            <td><input type="number" class="mark-input" data-subject="telugu" value="${student.marks.telugu}" disabled></td>
+            <td><input type="number" class="mark-input" data-subject="hindi" value="${student.marks.hindi}" disabled></td>
+            <td><input type="number" class="mark-input" data-subject="english" value="${student.marks.english}" disabled></td>
+            <td><input type="number" class="mark-input" data-subject="maths" value="${student.marks.maths}" disabled></td>
+            <td><input type="number" class="mark-input" data-subject="science" value="${student.marks.science}" disabled></td>
+            <td><input type="number" class="mark-input" data-subject="social" value="${student.marks.social}" disabled></td>
+            <td class="edit-only" style="display:none;">
+              <button class="btn-teal" style="background:#ef4444; padding:5px 10px;" onclick="deleteStudent(${student.id})">🗑️</button>
+            </td>
+          </tr>
+        `;
+
+        // Calculate totals for chart
+        for (let sub in totals) {
+          totals[sub] += student.marks[sub] || 0;
+        }
+      });
+
+      document.getElementById("classStudents").innerText = count;
+
+      // Calculate averages and render chart
+      const averages = subjects.map(sub => count > 0 ? (totals[sub.toLowerCase()] / count).toFixed(1) : 0);
+      renderChart(averages);
+      loadWeeklyStats();
+      
+      // Update AI student selector
+      rebuildStudentSel();
+    });
+}
+
+function loadWeeklyStats() {
+  fetch(`/get_class_weekly_stats/${currentClass}`)
+    .then(res => res.json())
+    .then(data => {
+      renderWeeklyAttendanceChart(data);
+    });
+}
+
+function renderWeeklyAttendanceChart(data) {
+  const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
+  
+  // Use a global variable to store the weekly chart instance to avoid overlaps
+  if (window.weeklyChartInstance) window.weeklyChartInstance.destroy();
+
+  const labels = data.map(d => d.day);
+  const presentData = data.map(d => d.present);
+  const absentData = data.map(d => d.absent);
+
+  window.weeklyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Present',
+          data: presentData,
+          backgroundColor: '#2dd4bf',
+          borderRadius: 4
+        },
+        {
+          label: 'Absent',
+          data: absentData,
+          backgroundColor: '#ef4444',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 11 } } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, font: { family: 'DM Sans', size: 11 } },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'DM Sans', size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function renderChart(averages) {
+  const ctx = document.getElementById('subjectChart').getContext('2d');
+  
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: subjects,
+      datasets: [{
+        label: 'Class Average (%)',
+        data: averages,
+        backgroundColor: 'rgba(45, 212, 191, 0.2)',
+        borderColor: '#2dd4bf',
+        borderWidth: 2,
+        borderRadius: 6,
+        barThickness: 30
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: '#e8ecf4' },
+          ticks: { font: { family: 'DM Sans', size: 11 } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'DM Sans', size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function toggleAttendance(el) {
+  if (el.classList.contains('present')) {
+    el.classList.remove('present');
+    el.classList.add('absent');
+    el.innerHTML = el.innerHTML.replace('✅', '❌');
+  } else {
+    el.classList.remove('absent');
+    el.classList.add('present');
+    el.innerHTML = el.innerHTML.replace('❌', '✅');
+  }
+}
+
+function saveAttendance() {
+  const items = document.querySelectorAll("#attendanceGrid .attend-item");
+  const attendanceData = [];
+
+  items.forEach(item => {
+    const studentId = item.getAttribute("data-id");
+    const status = item.classList.contains('present') ? 'Present' : 'Absent';
+    attendanceData.push({
+      student_id: studentId,
+      status: status
+    });
+  });
+
+  fetch('/save_attendance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ attendance: attendanceData })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'success') {
+      showToast("Attendance saved successfully! ✅");
+      loadStudents(); // Refresh to update percentages
+    } else {
+      showToast("Error saving attendance! ❌");
+    }
+  });
+}
+
+function toggleEditMode(isEdit) {
+  isEditMode = isEdit;
+  const inputs = document.querySelectorAll(".mark-input");
+  inputs.forEach(input => input.disabled = !isEdit);
+
+  // Toggle visibility of edit-only elements (like delete button and column header)
+  const editOnly = document.querySelectorAll(".edit-only");
+  editOnly.forEach(el => el.style.display = isEdit ? "table-cell" : "none");
+
+  document.getElementById("editBtn").style.display = isEdit ? "none" : "flex";
+  document.getElementById("addStudentBtn").style.display = isEdit ? "flex" : "none";
+  document.getElementById("saveMarksBtn").style.display = isEdit ? "flex" : "none";
+  document.getElementById("cancelBtn").style.display = isEdit ? "flex" : "none";
+}
+
+function deleteStudent(id) {
+  if (!confirm("Are you sure you want to delete this student and all their records?")) return;
+
+  fetch('/delete_student', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id: id })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'success') {
+      showToast("Student deleted successfully! 🗑️");
+      loadStudents();
+    } else {
+      showToast("Error deleting student! ❌");
+    }
+  });
+}
+
+function addStudentRow() {
+  const tbody = document.getElementById("marksBody");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" class="mark-input" placeholder="Enter Name" style="width:120px; text-align:left;"></td>
+    <td><input type="number" class="mark-input" data-subject="telugu" value="0"></td>
+    <td><input type="number" class="mark-input" data-subject="hindi" value="0"></td>
+    <td><input type="number" class="mark-input" data-subject="english" value="0"></td>
+    <td><input type="number" class="mark-input" data-subject="maths" value="0"></td>
+    <td><input type="number" class="mark-input" data-subject="science" value="0"></td>
+    <td><input type="number" class="mark-input" data-subject="social" value="0"></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function saveMarks() {
+  const rows = document.querySelectorAll("#marksBody tr");
+  const marksData = [];
+  const newStudents = [];
+
+  rows.forEach(row => {
+    const studentId = row.getAttribute("data-id");
+    const nameInput = row.querySelector("input[type='text']");
+    const inputs = row.querySelectorAll("input[type='number']");
+    const marks = {};
+
+    inputs.forEach(input => {
+      marks[input.getAttribute("data-subject")] = parseInt(input.value) || 0;
+    });
+
+    if (studentId) {
+      marksData.push({
+        student_id: studentId,
+        marks: marks
+      });
+    } else {
+      newStudents.push({
+        name: nameInput.value,
+        class: currentClass,
+        marks: marks
+      });
+    }
+  });
+
+  // Save existing marks
+  const p1 = marksData.length > 0 
+    ? fetch('/save_marks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marks: marksData })
+      }).then(res => res.json())
+    : Promise.resolve({status: 'success'});
+
+  // Save new students if any
+  const p2 = newStudents.length > 0
+    ? fetch('/teacher/add_students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ students: newStudents })
+      }).then(res => res.json())
+    : Promise.resolve({status: 'success'});
+
+  Promise.all([p1, p2]).then(results => {
+    if (results.every(r => r.status === 'success')) {
+      showToast("All changes saved successfully! ✅");
+      toggleEditMode(false);
+      loadStudents();
+    } else {
+      showToast("Error saving changes! ❌");
+    }
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Load when page opens
+initTeacher();
+
+function logout() {
+  localStorage.removeItem("teacherData");
+  window.location.href = "/";
+}
+
+// ══════════════════════════════════
+//  NAV
+// ══════════════════════════════════
+function navDashClick(e) {
+  e.preventDefault();
+  if (aiOpen) closeAI();
+  document.getElementById('navDash').classList.add('active');
+  document.getElementById('navAI').classList.remove('active');
+}
+
+function navAIClick(e) {
+  e.preventDefault();
+  if (aiOpen) { closeAI(); return; }
+  openAI();
+}
+
+function openAI() {
+  aiOpen = true;
+  document.getElementById('aiPanel').classList.add('open');
+  document.getElementById('layout').classList.add('ai-open');
+  document.getElementById('navAI').classList.add('active');
+  document.getElementById('navDash').classList.remove('active');
+  rebuildStudentSel();
+  setTimeout(()=>document.getElementById('aipInput').focus(), 400);
+}
+
+function closeAI() {
+  aiOpen = false;
+  document.getElementById('aiPanel').classList.remove('open');
+  document.getElementById('layout').classList.remove('ai-open');
+  document.getElementById('navAI').classList.remove('active');
+  document.getElementById('navDash').classList.add('active');
+}
+
+function openAIWithContext() {
+  if (!aiOpen) openAI();
+  const atRisk = currentStudentsData.filter(s => {
+    const m = s.marks;
+    const avg = (subjects.reduce((sum, sub) => sum + (m[sub.toLowerCase()] || 0), 0) / subjects.length);
+    return avg < 65;
+  });
+  setTimeout(()=>{
+    const prompt = atRisk.length > 0
+      ? `Please analyze the at-risk students in Class ${currentClass}: ${atRisk.map(s=>s.name).join(', ')}. What are their weakest areas and what specific strategies should I use to help them improve?`
+      : `Give me a comprehensive performance summary for all students in Class ${currentClass} and what I can do to keep them excelling.`;
+    document.getElementById('aipInput').value = prompt;
+    sendMsg();
+  }, 500);
+}
+
+function rebuildStudentSel() {
+  const sel = document.getElementById('aiStudentSel');
+  sel.innerHTML = `<option value="all">All Students — Class ${currentClass}</option>`;
+  currentStudentsData.forEach(student => {
+    const o = document.createElement('option');
+    o.value = student.id; o.textContent = student.name;
+    sel.appendChild(o);
+  });
+}
+
+// ══════════════════════════════════
+//  AI CHAT
+// ══════════════════════════════════
+function quickAsk(topic) {
+  const sel = document.getElementById('aiStudentSel');
+  const who = sel.value === 'all' ? `all students in Class ${currentClass}` : sel.options[sel.selectedIndex].text;
+  document.getElementById('aipInput').value = `${topic} for ${who}`;
+  sendMsg();
+}
+
+function buildSystem() {
+  const selId = document.getElementById('aiStudentSel').value;
+  const targets = selId === 'all' ? currentStudentsData : [currentStudentsData.find(s => s.id == selId)];
+
+  const totals = { telugu: 0, hindi: 0, english: 0, maths: 0, science: 0, social: 0 };
+  currentStudentsData.forEach(s => {
+    for (let sub in totals) totals[sub] += s.marks[sub] || 0;
+  });
+  const count = currentStudentsData.length;
+  const classAvgs = subjects.map(sub => {
+    return `${sub}: ${(count > 0 ? totals[sub.toLowerCase()] / count : 0).toFixed(1)}`;
+  }).join(', ');
+
+  let studentBlocks = targets.map(student => {
+    const m = student.marks;
+    const a = (subjects.reduce((s, sub) => s + (m[sub.toLowerCase()] || 0), 0) / subjects.length).toFixed(1);
+    const weak = subjects.filter(s => m[s.toLowerCase()] < 65);
+    const strong = subjects.filter(s => m[s.toLowerCase()] >= 85);
+    const att = student.attendance || '0%';
+    const todayAtt = student.today_attendance || 'N/A';
+    const status = parseFloat(a) < 65 ? '🔴 AT RISK' : parseFloat(a) < 75 ? '🟡 AVERAGE' : '🟢 GOOD';
+    return `──────────────
+Student: ${student.name}
+Status: ${status}
+Overall Attendance: ${att}
+Today's Attendance: ${todayAtt}
+Marks: ${subjects.map(s => `${s}:${m[s.toLowerCase()] || 0}`).join(' | ')}
+Overall Average: ${a}%
+Strong Subjects (≥85): ${strong.length ? strong.join(', ') : 'None'}
+Weak Subjects (<65): ${weak.length ? weak.join(', ') : 'None'}`;
+  }).join('\n');
+
+  return `You are EduSmart AI — an intelligent, empathetic educational assistant for Dr. Sunita Rao, a teacher at EduSmart School.
+
+TEACHER: Dr. Sunita Rao
+CURRENT CLASS: ${currentClass}
+TOTAL STUDENTS: ${currentStudentsData.length}
+CLASS AVERAGES BY SUBJECT: ${classAvgs}
+
+STUDENT DATA:
+${studentBlocks}
+
+YOUR CAPABILITIES:
+- Deep performance analysis based on real data above
+- Score predictions and academic risk assessment
+- Root-cause analysis for underperformance
+- Personalized, actionable improvement strategies per student
+- Comparison with class averages and benchmarks
+- Attendance impact analysis
+- Engagement and motivation suggestions
+
+RESPONSE GUIDELINES:
+- Always use the actual data provided — be specific, cite actual scores
+- Be warm, professional, and encouraging
+- Use bullet points, bold headings, and clear structure
+- Keep responses concise (under 300 words) unless deep analysis is requested
+- When predicting scores, explain your reasoning based on trends
+- Prioritize actionable advice over generic statements`;
+}
+
+async function sendMsg() {
+  const input = document.getElementById('aipInput');
+  const text = input.value.trim();
+  if (!text || isTyping) return;
+
+  addMsg('user', text);
+  chatHistory.push({role:'user', content:text});
+  input.value=''; input.style.height='auto';
+
+  isTyping = true;
+  document.getElementById('aipSendBtn').disabled = true;
+  const typing = addTyping();
+
+  try {
+    const res = await fetch('/ask-ai',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[
+          {role:'system', content: buildSystem()},
+          ...chatHistory
+        ]
+      })
+    });
+    if (!res.ok) {
+    const text = await res.text();
+    addMsg('ai', '⚠️ API Error: ' + text);
+    return;
+  }
+
+  const data = await res.json();
+  console.log("FULL RESPONSE:", data);
+
+  if (data.error) {
+    addMsg('ai', '⚠️ ' + data.error.message);
+    return;
+  }
+
+  const reply = data.choices?.[0]?.message?.content;
+
+  if (!reply) {
+    addMsg('ai', '⚠️ Empty response from AI');
+    return;
+  }
+
+  addMsg('ai', reply);
+
+} catch (err) {
+  console.error(err);
+  addMsg('ai', '⚠️ Network error. Check internet or API.');
+}
+
+  isTyping = false;
+  document.getElementById('aipSendBtn').disabled = false;
+}
+
+function addMsg(role, text) {
+  const box = document.getElementById('aipMessages');
+  const d = document.createElement('div');
+  d.className = `msg ${role}`;
+  const av = document.createElement('div');
+  av.className = `msg-av ${role==='ai'?'bot':'usr'}`;
+  av.textContent = role==='ai' ? '🤖' : 'Dr';
+  const bub = document.createElement('div');
+  bub.className = 'msg-bub';
+  bub.innerHTML = fmt(text);
+  d.appendChild(av); d.appendChild(bub);
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  return d;
+}
+
+function addTyping() {
+  const box = document.getElementById('aipMessages');
+  const d = document.createElement('div');
+  d.className = 'msg ai';
+  d.innerHTML = `<div class="msg-av bot">🤖</div><div class="msg-bub"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  return d;
+}
+
+function fmt(t) {
+  return t
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3} (.+)$/gm,'<strong>$1</strong>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+// INIT
+rebuildStudentSel();
+</script>
+</body>
+</html>

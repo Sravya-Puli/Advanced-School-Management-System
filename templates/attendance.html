@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Attendance</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a1a; min-height: 100vh; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; background: #fff; border-bottom: 1px solid #e5e5e5; }
+    .topbar-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+    .topbar-icons { display: flex; align-items: center; gap: 18px; }
+    .notif-btn { position: relative; background: none; border: none; cursor: pointer; padding: 4px; color: #555; font-size: 20px; line-height: 1; }
+    .notif-badge { position: absolute; top: -2px; right: -2px; background: #e24b4a; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+    .logout-btn { background: none; border: none; cursor: pointer; color: #555; font-size: 20px; padding: 4px; }
+
+    .main { padding: 32px 28px; max-width: 1100px; margin: 0 auto; }
+    .page-title { font-size: 24px; font-weight: 700; color: #1a1a1a; }
+    .page-sub { font-size: 13px; color: #777; margin-top: 4px; margin-bottom: 24px; }
+
+    .chart-card { background: #fff; border-radius: 12px; border: 1px solid #e5e5e5; padding: 24px 28px 20px; }
+    .chart-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px; }
+
+    .chart-wrap { position: relative; }
+
+    /* Y axis + bars area */
+    .chart-inner { display: flex; gap: 0; }
+    .y-axis { display: flex; flex-direction: column-reverse; justify-content: space-between; padding-bottom: 28px; padding-right: 10px; min-width: 36px; }
+    .y-label { font-size: 11px; color: #aaa; text-align: right; line-height: 1; }
+
+    .bars-area { flex: 1; position: relative; }
+    /* horizontal grid lines */
+    .grid-lines { position: absolute; inset: 0 0 28px 0; display: flex; flex-direction: column-reverse; justify-content: space-between; pointer-events: none; }
+    .grid-line { border-top: 1px dashed #e5e5e5; width: 100%; }
+
+    .bars-row { display: flex; align-items: flex-end; height: 260px; gap: 18px; padding: 0 12px; position: relative; }
+    .day-group { display: flex; flex-direction: column; align-items: center; gap: 0; flex: 1; cursor: pointer; }
+    .bars { display: flex; align-items: flex-end; gap: 4px; width: 100%; justify-content: center; }
+    .bar { border-radius: 4px 4px 0 0; transition: opacity 0.15s; min-width: 20px; }
+    .bar.present { background: #1d9e75; }
+    .bar.absent  { background: #e24b4a; }
+    .day-group:hover .bar { opacity: 0.85; }
+
+    .x-labels { display: flex; gap: 18px; padding: 6px 12px 0; }
+    .x-label { flex: 1; text-align: center; font-size: 12px; color: #888; }
+
+    /* Tooltip */
+    .tooltip { position: absolute; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px 14px; font-size: 13px; pointer-events: none; opacity: 0; transition: opacity 0.15s; box-shadow: 0 4px 16px rgba(0,0,0,0.10); z-index: 10; min-width: 140px; }
+    .tooltip.visible { opacity: 1; }
+    .tooltip-date { font-weight: 600; color: #1a1a1a; margin-bottom: 6px; font-size: 13px; }
+    .tooltip-present { color: #1d9e75; font-weight: 500; margin-bottom: 2px; }
+    .tooltip-absent  { color: #e24b4a; font-weight: 500; }
+
+    .legend { display: flex; gap: 18px; margin-top: 14px; justify-content: flex-end; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">Welcome back, Admin</span>
+  <div class="topbar-icons">
+    <button class="notif-btn" title="Notifications">
+      🔔<span class="notif-badge">3</span>
+    </button>
+    <button class="logout-btn" title="Logout">&#x2925;</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">Attendance</div>
+  <div class="page-sub">Track daily attendance across all classes</div>
+
+  <div class="chart-card">
+    <div class="chart-title">This Week's Attendance</div>
+
+    <div class="chart-wrap">
+      <div class="chart-inner">
+        <div class="y-axis" id="yAxis"></div>
+        <div class="bars-area">
+          <div class="grid-lines" id="gridLines"></div>
+          <div class="bars-row" id="barsRow"></div>
+          <div class="x-labels" id="xLabels"></div>
+        </div>
+      </div>
+      <div class="tooltip" id="tooltip">
+        <div class="tooltip-date" id="tt-date"></div>
+        <div class="tooltip-present" id="tt-present"></div>
+        <div class="tooltip-absent" id="tt-absent"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#1d9e75"></div>Present</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e24b4a"></div>Absent</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadAttendanceData() {
+  fetch("/get_attendance_stats")
+  .then(res => res.json())
+  .then(data => {
+    if (data.length === 0) {
+      document.getElementById('barsRow').innerHTML = "<div style='color:#aaa; width:100%; text-align:center;'>No attendance data recorded yet.</div>";
+      return;
+    }
+
+    const maxVal = Math.max(...data.map(d => d.present + d.absent), 10) + 10;
+    const steps = [0, Math.round(maxVal/4), Math.round(maxVal/2), Math.round(maxVal*3/4), maxVal];
+    const chartH = 260;
+
+    // Y axis
+    const yAxis = document.getElementById('yAxis');
+    yAxis.innerHTML = "";
+    steps.forEach(v => {
+      const el = document.createElement('div');
+      el.className = 'y-label';
+      el.textContent = v;
+      yAxis.appendChild(el);
+    });
+
+    // Grid lines
+    const gridLines = document.getElementById('gridLines');
+    gridLines.innerHTML = "";
+    steps.forEach(() => {
+      const el = document.createElement('div');
+      el.className = 'grid-line';
+      gridLines.appendChild(el);
+    });
+
+    // Bars
+    const barsRow = document.getElementById('barsRow');
+    const xLabels = document.getElementById('xLabels');
+    barsRow.innerHTML = "";
+    xLabels.innerHTML = "";
+
+    const tooltip = document.getElementById('tooltip');
+    const ttDate = document.getElementById('tt-date');
+    const ttPres = document.getElementById('tt-present');
+    const ttAbs = document.getElementById('tt-absent');
+
+    data.forEach((d, i) => {
+      const presH = Math.round((d.present / maxVal) * chartH);
+      const absH = Math.round((d.absent / maxVal) * chartH);
+
+      const group = document.createElement('div');
+      group.className = 'day-group';
+      group.innerHTML = `
+        <div class="bars">
+          <div class="bar present" style="height:${presH}px; width:clamp(18px,3.5vw,44px);"></div>
+          <div class="bar absent"  style="height:${absH}px;  width:clamp(12px,2vw,28px);"></div>
+        </div>
+      `;
+
+      group.addEventListener('mouseenter', e => {
+        ttDate.textContent = d.date;
+        ttPres.textContent = 'Present : ' + d.present;
+        ttAbs.textContent = 'Absent : ' + d.absent;
+        tooltip.classList.add('visible');
+        positionTooltip(group);
+      });
+      group.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+
+      barsRow.appendChild(group);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'x-label';
+      lbl.textContent = d.day;
+      xLabels.appendChild(lbl);
+    });
+  });
+}
+
+function positionTooltip(group) {
+  const wrapRect = document.querySelector('.chart-wrap').getBoundingClientRect();
+  const groupRect = group.getBoundingClientRect();
+  let left = groupRect.left - wrapRect.left + groupRect.width / 2 - 70;
+  let top = groupRect.top - wrapRect.top - 110;
+  if (left < 0) left = 0;
+  if (top < 0) top = groupRect.height + 10;
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = top + 'px';
+}
+
+// Load initial data
+loadAttendanceData();
+</script>
+</body>
+</html>

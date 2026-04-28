@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduSmart AI Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { height: 100vh; display: flex; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; }
+        .container { display: flex; width: 100%; }
+
+        .left {
+            width: 40%; padding: 60px;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+        }
+        .left h1 { font-size: 32px; margin: 20px 0 10px; }
+        .features { margin-top: 30px; }
+        .features li { margin-bottom: 15px; list-style: none; font-size: 16px; text-align: left; }
+        .features li::before { content: "✦ "; color: #38bdf8; }
+        .icon i { font-size: 70px; color: #ffffff; background: rgba(104,95,228,0.1); padding: 20px; border-radius: 20px; }
+
+        .right { width: 60%; display: flex; justify-content: center; align-items: center; background: #e2e5e9; color: black; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .login-box h2 { margin-bottom: 5px; }
+        .subtitle { color: gray; margin-bottom: 20px; font-size: 14px; }
+
+        .roles { display: flex; gap: 10px; margin-bottom: 20px; }
+        .role { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .role small { display: block; color: gray; font-size: 12px; }
+        .role.active { border: 2px solid #2bb39a; background: #e6f7f4; }
+
+        .input-group label { display: block; margin: 10px 0 5px; font-size: 14px; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; background: white; color: black; }
+        .input-group input:focus { border-color: #2bb39a; }
+
+        .btn { width: 100%; margin-top: 20px; padding: 12px; background: #2bb39a; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn:hover { background: #239a85; }
+
+        .error-msg { color: red; font-size: 13px; margin-top: 10px; text-align: center; display: none; }
+        .footer { text-align: center; margin-top: 15px; font-size: 12px; color: gray; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- LEFT SIDE -->
+    <div class="left">
+        <span class="icon"><i class="fa-solid fa-school"></i></span>
+        <h1>EduSmart AI</h1>
+        <p>Smart School Management System</p>
+        <ul class="features">
+            <li>AI-powered student performance insights</li>
+            <li>Automated attendance & reporting</li>
+            <li>Intelligent academic tracking</li>
+        </ul>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right">
+        <div class="login-box">
+            <h2>Sign in</h2>
+            <p class="subtitle">Choose your role to continue</p>
+
+            <div class="roles">
+                <div class="role active" data-role="admin">
+                    Admin <small>Full system access</small>
+                </div>
+                <div class="role" data-role="teacher">
+                    Teacher <small>Class management</small>
+                </div>
+                <div class="role" data-role="student">
+                    Student <small>View your data</small>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="emailInput" placeholder="admin@school.com">
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="passwordInput" placeholder="••••••••">
+            </div>
+
+            <p class="error-msg" id="errorMsg">Invalid email or password. Try again.</p>
+            <button class="btn" id="loginBtn">Sign in as Admin</button>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const roles = document.querySelectorAll(".role");
+    const loginBtn = document.getElementById("loginBtn");
+    const errorMsg = document.getElementById("errorMsg");
+
+    let selectedRole = "admin";
+
+    // Role switcher
+    roles.forEach(role => {
+        role.addEventListener("click", () => {
+            roles.forEach(r => r.classList.remove("active"));
+            role.classList.add("active");
+            selectedRole = role.dataset.role;
+            loginBtn.textContent = "Sign in as " + role.dataset.role.charAt(0).toUpperCase() + role.dataset.role.slice(1);
+        });
+    });
+
+    // Login button
+    loginBtn.addEventListener("click", () => {
+        const email = document.getElementById("emailInput").value.trim();
+        const password = document.getElementById("passwordInput").value.trim();
+
+        if (!email || !password) {
+            errorMsg.textContent = "Please enter both email and password.";
+            errorMsg.style.display = "block";
+            return;
+        }
+
+        errorMsg.style.display = "none";
+        loginBtn.textContent = "Signing in...";
+        loginBtn.disabled = true;
+
+        fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email, password: password, role: selectedRole })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                if (data.role === "teacher" && data.teacher) {
+                    localStorage.setItem("teacherData", JSON.stringify(data.teacher));
+                } else if (data.role === "student" && data.student) {
+                    localStorage.setItem("studentData", JSON.stringify(data.student));
+                }
+                
+                if (data.role === "admin")        window.location.href = "/admin";
+                else if (data.role === "teacher") window.location.href = "/teacher";
+                else                              window.location.href = "/student";
+            } else {
+                errorMsg.textContent = data.message || "Invalid email or password.";
+                errorMsg.style.display = "block";
+                loginBtn.textContent = "Sign in as " + selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
+                loginBtn.disabled = false;
+            }
+        })
+        .catch(() => {
+            errorMsg.textContent = "Server error. Make sure Flask is running.";
+            errorMsg.style.display = "block";
+            loginBtn.disabled = false;
+        });
+    });
+</script>
+</body>
+</html>

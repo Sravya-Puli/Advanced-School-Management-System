@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Classes Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f6f5;
+      --surface: #ffffff;
+      --border: #e5e9e7;
+      --text-primary: #1a1f1c;
+      --text-secondary: #6b7570;
+      --accent: #1aad87;
+      --accent-hover: #159e7a;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-welcome { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .icon-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; position: relative;
+      transition: background 0.15s;
+    }
+    .icon-btn:hover { background: var(--bg); }
+    .icon-btn svg { width: 18px; height: 18px; color: var(--text-secondary); }
+    .notif-badge {
+      position: absolute; top: -3px; right: -3px;
+      background: #e53e3e; color: #fff;
+      font-size: 9px; font-weight: 700;
+      border-radius: 50%; width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--surface);
+    }
+
+    /* ── MAIN ── */
+    .main { max-width: 1200px; margin: 0 auto; padding: 36px 28px; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      animation: fadeUp 0.4s ease both;
+    }
+    .page-title h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+    .page-title p  { font-size: 13.5px; color: var(--text-secondary); margin-top: 3px; }
+
+    .btn-add {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius-sm);
+      padding: 10px 20px;
+      font-size: 14px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(26,173,135,0.25);
+    }
+    .btn-add:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 14px rgba(26,173,135,0.35);
+      transform: translateY(-1px);
+    }
+    .btn-add:active { transform: translateY(0); }
+    .btn-add svg { width: 16px; height: 16px; }
+
+    /* ── GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    /* ── CLASS CARD ── */
+    .class-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 22px 20px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s, transform 0.2s;
+      animation: fadeUp 0.45s ease both;
+      cursor: pointer;
+    }
+    .class-card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+      transform: translateY(-2px);
+    }
+
+    .class-card:nth-child(1)  { animation-delay: 0.08s; }
+    .class-card:nth-child(2)  { animation-delay: 0.12s; }
+    .class-card:nth-child(3)  { animation-delay: 0.16s; }
+    .class-card:nth-child(4)  { animation-delay: 0.20s; }
+    .class-card:nth-child(5)  { animation-delay: 0.24s; }
+    .class-card:nth-child(6)  { animation-delay: 0.28s; }
+    .class-card:nth-child(7)  { animation-delay: 0.32s; }
+    .class-card:nth-child(8)  { animation-delay: 0.36s; }
+    .class-card:nth-child(9)  { animation-delay: 0.40s; }
+    .class-card:nth-child(10) { animation-delay: 0.44s; }
+
+    .class-name {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .card-info { display: flex; flex-direction: column; gap: 10px; }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .info-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 13.5px;
+    }
+
+    .info-left svg { width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0; }
+
+    .info-value {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* divider between rows */
+    .card-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) {
+      .cards-grid { grid-template-columns: 1fr; }
+      .main { padding: 20px 16px; }
+      .page-header { flex-direction: column; gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <span class="topbar-welcome">Welcome back, Admin</span>
+    <div class="topbar-actions">
+      <button class="icon-btn" aria-label="Notifications">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span class="notif-badge">3</span>
+      </button>
+      <button class="icon-btn" aria-label="Logout">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Classes</h1>
+        <p>Manage grades and sections</p>
+      </div>
+      <button class="btn-add">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Create Class
+      </button>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div class="cards-grid" id="classesGrid"></div>
+
+  </main>
+
+  <script>
+    const classes = [
+      { name: "Grade 1-A",  students: 30, fee: "₹20,000" },
+      { name: "Grade 2-A",  students: 28, fee: "₹22,000" },
+      { name: "Grade 3-A",  students: 32, fee: "₹24,000" },
+      { name: "Grade 4-A",  students: 25, fee: "₹26,000" },
+      { name: "Grade 5-A",  students: 27, fee: "₹28,000" },
+      { name: "Grade 6-A",  students: 30, fee: "₹30,000" },
+      { name: "Grade 7-A",  students: 28, fee: "₹32,000" },
+      { name: "Grade 8-A",  students: 26, fee: "₹34,000" },
+      { name: "Grade 9-A",  students: 24, fee: "₹36,000" },
+      { name: "Grade 10-A", students: 22, fee: "₹38,000" },
+    ];
+
+    const grid = document.getElementById('classesGrid');
+
+    const studentIcon = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m0 0a4 4 0 118 0m-8 0A4 4 0 019 12a4 4 0 014 4"/>
+      <circle cx="12" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+
+    const rupeeIcon = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M9 3h9M9 8h9M9 3v5M9 8c0 3.314 2.686 6 6 6H9l4 5"/>
+    </svg>`;
+
+    classes.forEach(cls => {
+      grid.innerHTML += `
+        <div class="class-card">
+          <div class="class-name">${cls.name}</div>
+          <div class="card-info">
+            <div class="info-row">
+              <div class="info-left">${studentIcon} Students</div>
+              <span class="info-value">${cls.students}</span>
+            </div>
+            <hr class="card-divider"/>
+            <div class="info-row">
+              <div class="info-left">${rupeeIcon} Annual Fee</div>
+              <span class="info-value">${cls.fee}</span>
+            </div>
+          </div>
+        </div>`;
+    });
+  </script>
+
+</body>
+</html>

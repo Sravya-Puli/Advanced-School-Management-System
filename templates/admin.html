@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSmart AI - Admin Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sidebar-bg: #1a1f2e;
+    --accent: #4ecca3;
+    --accent-dark: #38b2ac;
+    --main-bg: #f4f6fb;
+    --card-bg: #ffffff;
+    --text-primary: #1a1f2e;
+    --text-secondary: #7a8599;
+    --border: #e8ecf4;
+    --shadow: 0 2px 14px rgba(30,40,80,0.07);
+    --green: #4ecca3;
+    --orange: #f6a623;
+    --red: #e85d5d;
+    --blue: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--main-bg); color: var(--text-primary); display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 200px; min-height: 100vh; background: var(--sidebar-bg);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  }
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .brand-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #4ecca3, #38b2ac);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .brand-text .name { color: #fff; font-weight: 700; font-size: 13.5px; }
+  .brand-text .sub  { color: #a0aab8; font-size: 10.5px; margin-top: 1px; }
+  .sidebar-nav { flex: 1; padding: 14px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; color: #a0aab8; font-size: 13px; font-weight: 500;
+    cursor: pointer; text-decoration: none; transition: all .15s; border-radius: 0;
+  }
+  .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .nav-item.active {
+    color: #fff; background: #2d3448; border-radius: 8px;
+    margin: 0 8px; padding: 10px 10px; width: calc(100% - 16px);
+    position: relative;
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    height: 55%; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+
+  /* ── MAIN ── */
+  .main { margin-left: 200px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 13px 28px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h2 { font-size: 15.5px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .notif-btn {
+    position: relative; background: none; border: none; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center;
+  }
+  .notif-badge {
+    position: absolute; top: -4px; right: -5px;
+    background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+    min-width: 15px; height: 15px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center; border: 2px solid #fff;
+  }
+  .logout-btn { background: none; border: none; cursor: pointer; font-size: 18px; color: #7a8599; }
+
+  /* ── CONTENT ── */
+  .content { padding: 24px 28px; flex: 1; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-sub   { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 20px; margin-top: 2px; }
+
+  /* ── STAT CARDS ── */
+  .stat-row { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin-bottom: 18px; }
+  .stat-card {
+    background: var(--card-bg); border-radius: 12px; padding: 16px 16px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px; transition: transform .15s;
+    cursor: default;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .stat-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+  .stat-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .ic-blue   { background: #eaf3ff; }
+  .ic-teal   { background: #e6faf5; }
+  .ic-green  { background: #e6faf5; }
+  .ic-orange { background: #fff8ec; }
+  .ic-purple { background: #f0eeff; }
+  .ic-pink   { background: #fff0f5; }
+  .stat-value { font-size: 22px; font-weight: 700; letter-spacing: -.4px; line-height: 1; }
+  .stat-change { font-size: 11px; font-weight: 500; color: var(--green); }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card-bg); border-radius: 12px; padding: 20px 22px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+
+  /* ── ROW LAYOUTS ── */
+  .row-2 { display: grid; gap: 16px; margin-bottom: 16px; }
+  .row-2-col { grid-template-columns: 1fr 300px; }
+  .row-2-half { grid-template-columns: 1fr 1fr; }
+
+  /* ── LINE CHART ── */
+  .linechart-wrap { height: 200px; }
+
+  /* ── DONUT ── */
+  .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .donut-canvas-wrap { width: 170px; height: 170px; }
+  .donut-legend { width: 100%; display: flex; flex-direction: column; gap: 9px; }
+  .legend-row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; }
+  .legend-left { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { color: var(--text-secondary); }
+  .legend-pct { font-weight: 600; }
+
+  /* ── PAYMENTS TABLE ── */
+  .pay-list { display: flex; flex-direction: column; gap: 0; }
+  .pay-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .pay-row:last-child { border-bottom: none; }
+  .pay-left { display: flex; flex-direction: column; gap: 2px; }
+  .pay-name { font-size: 13px; font-weight: 600; }
+  .pay-meta { font-size: 11px; color: var(--text-secondary); }
+  .pay-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .pay-amount { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 99px;
+    font-size: 10.5px; font-weight: 600;
+  }
+  .badge-green  { background: #e6faf5; color: #2dd4bf; }
+  .badge-orange { background: #fff8ec; color: #d97706; }
+  .badge-red    { background: #fff0f0; color: var(--red); }
+  .badge-blue   { background: #eaf3ff; color: var(--blue); }
+
+  /* ── PENDING FEES ── */
+  .pend-list { display: flex; flex-direction: column; gap: 0; }
+  .pend-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .pend-row:last-child { border-bottom: none; }
+  .pend-name { font-size: 13px; font-weight: 600; }
+  .pend-class { font-size: 11px; color: var(--text-secondary); }
+  .pend-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .pend-amount { font-size: 13px; font-weight: 700; color: var(--red); }
+
+  /* ── GROUPED BAR CHART ── */
+  .barchart-wrap { height: 220px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #d0d8ea; border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text">
+      <div class="name">EduSmart AI</div>
+      <div class="sub">School Management</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" href="#"><span class="nav-icon">🏠</span> Dashboard</a>
+
+    <a class="nav-item" href="/admin/students">
+        <span class="nav-icon">👤</span> Students
+    </a>
+
+    <a class="nav-item" href="/admin/teachers">
+        <span class="nav-icon">🧑‍🏫</span> Teachers
+    </a>
+
+    <a class="nav-item" href="/classes">
+        <span class="nav-icon">📖</span> Classes
+    </a>
+
+    <a class="nav-item" href="/fees">
+        <span class="nav-icon">💰</span> Fee Management
+    </a>
+
+    <a class="nav-item" href="/attendance">
+        <span class="nav-icon">🧾</span> Attendance
+    </a>
+
+    <a class="nav-item" href="/analytics">
+        <span class="nav-icon">📊</span> Analytics
+    </a>
+
+    <a class="nav-item" href="/ai">
+        <span class="nav-icon">🤖</span> AI Assistant
+    </a>
+</nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <header class="topbar">
+    <h2>Welcome back, Admin</h2>
+    <div class="topbar-right">
+      <button class="notif-btn">🔔<span class="notif-badge">3</span></button>
+      <button class="logout-btn" onclick="location.href='/'">⎋</button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="page-title">Admin Dashboard</div>
+    <div class="page-sub">Overview of your school's performance and finances</div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-label">Total Students</div>
+          <div class="stat-icon ic-blue">🎓</div>
+        </div>
+        <div class="stat-value" id="totalStudents">0</div>
+        <div class="stat-change">↑ 5.2% from last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-label">Total Teachers</div>
+          <div class="stat-icon ic-teal">👥</div>
+        </div>
+        <div class="stat-value" id="totalTeachers">0</div>
+        <div style="height:14px"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-label">Fees Collected</div>
+          <div class="stat-icon ic-green">₹</div>
+        </div>
+        <div class="stat-value" id="totalCollected">₹0</div>
+        <div class="stat-change">↑ 12.5% from last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-label">Pending Fees</div>
+          <div class="stat-icon ic-orange">⚠️</div>
+        </div>
+        <div class="stat-value" id="totalPending">₹0</div>
+        <div style="height:14px"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-label">Attendance Today</div>
+          <div class="stat-icon ic-purple">📅</div>
+        </div>
+        <div class="stat-value" id="attendanceToday">0%</div>
+        <div style="height:14px"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-label">Active Classes</div>
+          <div class="stat-icon ic-pink">📈</div>
+        </div>
+        <div class="stat-value" id="activeClasses">0</div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+
+    <!-- LINE CHART + DONUT -->
+    <div class="row-2 row-2-col" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">Monthly Fee Collection</div>
+        <div class="linechart-wrap"><canvas id="feeChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Student Performance</div>
+        <div class="donut-wrap">
+          <div class="donut-canvas-wrap"><canvas id="perfChart"></canvas></div>
+          <div class="donut-legend">
+            <div class="legend-row">
+              <div class="legend-left"><div class="legend-dot" style="background:#4ecca3"></div><span class="legend-label">High Performer</span></div>
+              <span class="legend-pct" id="perfHigh">0%</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-left"><div class="legend-dot" style="background:#f6a623"></div><span class="legend-label">Average</span></div>
+              <span class="legend-pct" id="perfAvg">0%</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-left"><div class="legend-dot" style="background:#e85d5d"></div><span class="legend-label">At Risk</span></div>
+              <span class="legend-pct" id="perfRisk">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT PAYMENTS + PENDING FEES -->
+    <div class="row-2 row-2-half" style="margin-bottom:16px;">
+      <!-- Recent Payments -->
+      <div class="card">
+        <div class="card-title">Recent Payments</div>
+        <div class="pay-list" id="recentPaymentsList">
+          <!-- Data will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Students with Pending Fees -->
+      <div class="card">
+        <div class="card-title">Students with Pending Fees</div>
+        <div class="pend-list" id="pendingStudentsList">
+          <!-- Data will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBJECT-WISE PERFORMANCE -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Subject-wise Performance</div>
+      <div class="barchart-wrap"><canvas id="subjectChart"></canvas></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function loadDashboardStats() {
+  fetch("/get_admin_dashboard_stats")
+  .then(res => res.json())
+  .then(data => {
+    // Update Stats Cards
+    document.getElementById("totalStudents").innerText = data.total_students;
+    document.getElementById("totalTeachers").innerText = data.total_teachers;
+    document.getElementById("totalCollected").innerText = data.total_collected;
+    document.getElementById("totalPending").innerText = data.total_pending;
+    document.getElementById("attendanceToday").innerText = data.attendance_today;
+    document.getElementById("activeClasses").innerText = data.active_classes;
+
+    // Update Performance Legend
+    document.getElementById("perfHigh").innerText = data.performance_stats.High + "%";
+    document.getElementById("perfAvg").innerText = data.performance_stats.Average + "%";
+    document.getElementById("perfRisk").innerText = data.performance_stats["At Risk"] + "%";
+
+    // Update Donut Chart
+    renderDonut(data.performance_stats);
+
+    // Update Recent Payments
+    const payList = document.getElementById("recentPaymentsList");
+    payList.innerHTML = "";
+    data.recent_payments.forEach(p => {
+      payList.innerHTML += `
+        <div class="pay-row">
+          <div class="pay-left">
+            <div class="pay-name">${p.name}</div>
+            <div class="pay-meta">Grade ${p.class} · ${p.date}</div>
+          </div>
+          <div class="pay-right">
+            <div class="pay-amount">₹${p.amount.toLocaleString()}</div>
+            <span class="badge ${p.mode === 'UPI' ? 'badge-green' : 'badge-blue'}">${p.mode}</span>
+          </div>
+        </div>
+      `;
+    });
+
+    // Update Pending Students
+    const pendList = document.getElementById("pendingStudentsList");
+    pendList.innerHTML = "";
+    data.pending_students.forEach(s => {
+      pendList.innerHTML += `
+        <div class="pend-row">
+          <div>
+            <div class="pend-name">${s.name}</div>
+            <div class="pend-class">Grade ${s.class}</div>
+          </div>
+          <div class="pend-right">
+            <div class="pend-amount">${s.pending}</div>
+            <span class="badge ${s.status === 'Partial' ? 'badge-orange' : 'badge-red'}">${s.status}</span>
+          </div>
+        </div>
+      `;
+    });
+  });
+}
+
+function renderDonut(stats) {
+  const ctx = document.getElementById('perfChart').getContext('2d');
+  if (window.perfChartInstance) window.perfChartInstance.destroy();
+  
+  window.perfChartInstance = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels:['High Performer','Average','At Risk'],
+      datasets:[{ data:[stats.High, stats.Average, stats["At Risk"]], backgroundColor:['#4ecca3','#f6a623','#e85d5d'], borderWidth:3, borderColor:'#fff', hoverOffset:5 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:true, cutout:'68%', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' '+c.label+': '+c.raw+'%' } } } }
+  });
+}
+
+// ── MONTHLY FEE LINE CHART ──
+const feeCtx = document.getElementById('feeChart').getContext('2d');
+const gGreen = feeCtx.createLinearGradient(0,0,0,200);
+gGreen.addColorStop(0,'rgba(78,204,163,0.28)'); gGreen.addColorStop(1,'rgba(78,204,163,0.01)');
+const gOrange = feeCtx.createLinearGradient(0,0,0,200);
+gOrange.addColorStop(0,'rgba(246,166,35,0.22)'); gOrange.addColorStop(1,'rgba(246,166,35,0.01)');
+new Chart(feeCtx,{
+  type:'line',
+  data:{
+    labels:['Sep','Oct','Nov','Dec','Jan','Feb'],
+    datasets:[
+      { label:'Collected', data:[195000,200000,205000,215000,215000,255000], borderColor:'#4ecca3', backgroundColor:gGreen, borderWidth:2.5, tension:.45, fill:true, pointRadius:3, pointBackgroundColor:'#4ecca3' },
+      { label:'Pending',   data:[65000,62000,60000,58000,55000,53000],       borderColor:'#f6a623', backgroundColor:gOrange, borderWidth:2.5, tension:.45, fill:true, pointRadius:3, pointBackgroundColor:'#f6a623' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>' ₹'+(c.raw/1000).toFixed(0)+'K' } } },
+    scales:{
+      x:{ grid:{display:false}, ticks:{font:{family:'DM Sans',size:11},color:'#7a8599'} },
+      y:{ min:0, max:280000, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{family:'DM Sans',size:10},color:'#7a8599', callback:v=>'₹'+(v/1000)+'K'} }
+    }
+  }
+});
+
+// ── SUBJECT-WISE GROUPED BAR CHART ──
+new Chart(document.getElementById('subjectChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Telugu','Hindi','English','Maths','Science','Social'],
+    datasets:[
+      { label:'High Performer', data:[82,78,88,91,85,80], backgroundColor:'#4ecca3', borderRadius:4, borderSkipped:false },
+      { label:'Average',        data:[65,62,70,68,66,63], backgroundColor:'#3b82f6', borderRadius:4, borderSkipped:false },
+      { label:'At Risk',        data:[42,38,45,40,44,39], backgroundColor:'#e85d5d', borderRadius:4, borderSkipped:false }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{ position:'top', align:'end', labels:{ font:{family:'DM Sans',size:12}, boxWidth:12, boxHeight:12, borderRadius:3, padding:16, color:'#7a8599' } },
+      tooltip:{ callbacks:{ label:c=>' '+c.dataset.label+': '+c.raw } }
+    },
+    scales:{
+      x:{ grid:{display:false}, ticks:{font:{family:'DM Sans',size:12},color:'#7a8599'} },
+      y:{ min:0, max:100, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{stepSize:25, font:{family:'DM Sans',size:11},color:'#7a8599'} }
+    }
+  }
+});
+
+// Initial load
+loadDashboardStats();
+</script>
+</body>
+</html>

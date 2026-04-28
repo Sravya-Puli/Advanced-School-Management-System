@@ -1,0 +1,316 @@
+analytics.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a1a; min-height: 100vh; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; background: #fff; border-bottom: 1px solid #e5e5e5; }
+    .topbar-title { font-size: 15px; font-weight: 600; }
+    .topbar-icons { display: flex; align-items: center; gap: 18px; }
+    .notif-btn { position: relative; background: none; border: none; cursor: pointer; padding: 4px; color: #555; font-size: 20px; line-height: 1; }
+    .notif-badge { position: absolute; top: -2px; right: -2px; background: #e24b4a; color: #fff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+    .logout-btn { background: none; border: none; cursor: pointer; color: #555; font-size: 20px; padding: 4px; }
+
+    .main { padding: 28px 28px; max-width: 1200px; margin: 0 auto; }
+    .page-title { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+    .page-sub { font-size: 13px; color: #777; margin-top: 3px; margin-bottom: 22px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e5e5e5; padding: 20px 22px; }
+    .card-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; }
+
+    .chart-container { position: relative; width: 100%; height: 220px; }
+
+    /* AI Insights */
+    .insights-sub { font-size: 11px; color: #aaa; margin-top: -10px; margin-bottom: 14px; }
+    .insight-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #f9f9f9; margin-bottom: 8px; font-size: 13px; color: #333; line-height: 1.4; }
+    .insight-item:last-child { margin-bottom: 0; }
+    .insight-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      .main { padding: 18px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">Welcome back, Admin</span>
+  <div class="topbar-icons">
+    <button class="notif-btn">🔔<span class="notif-badge">8</span></button>
+    <button class="logout-btn">&#x2925;</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">Analytics</div>
+  <div class="page-sub">AI-powered insights and trends</div>
+
+  <div class="grid">
+
+    <!-- Fee Collection Trend -->
+    <div class="card">
+      <div class="card-title">Fee Collection Trend</div>
+      <div class="chart-container">
+        <canvas id="areaChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Class-wise Revenue vs Target -->
+    <div class="card">
+      <div class="card-title">Class-wise Revenue vs Target</div>
+      <div class="chart-container">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Subject Radar -->
+    <div class="card">
+      <div class="card-title">Subject Radar</div>
+      <div class="chart-container">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="card">
+      <div class="card-title">AI Insights</div>
+      <div class="insights-sub">Powered by machine learning analysis</div>
+      <div id="aiInsightsList">
+        <!-- Data will be loaded here -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const tealColor   = '#1d9e75';
+const tealLight   = 'rgba(29,158,117,0.15)';
+const tealFill    = 'rgba(29,158,117,0.25)';
+const grayBar     = '#c8cdd4';
+const gridColor   = 'rgba(0,0,0,0.06)';
+const tickColor   = '#aaa';
+const fontSize    = 11;
+
+function loadAnalytics() {
+  fetch("/get_analytics_data")
+  .then(res => res.json())
+  .then(data => {
+    renderRadar(data.radar);
+    renderBar(data.fee_stats);
+    renderInsights(data.insights);
+  });
+}
+
+function renderRadar(radarData) {
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: ['Telugu', 'Hindi', 'English', 'Maths', 'Science', 'Social'],
+      datasets: [{
+        label: 'Class Average',
+        data: radarData,
+        borderColor: tealColor,
+        backgroundColor: tealLight,
+        borderWidth: 2,
+        pointBackgroundColor: tealColor,
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 25, color: '#bbb', font: { size: 10 }, backdropColor: 'transparent' },
+          grid: { color: 'rgba(0,0,0,0.08)' },
+          angleLines: { color: 'rgba(0,0,0,0.08)' },
+          pointLabels: { color: '#555', font: { size: 12 } }
+        }
+      }
+    }
+  });
+}
+
+function renderBar(feeStats) {
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: feeStats.map(s => s.class),
+      datasets: [
+        {
+          label: 'Fully Paid',
+          data: feeStats.map(s => s.paid),
+          backgroundColor: tealColor,
+          borderRadius: 4,
+          barPercentage: 0.4,
+        },
+        {
+          label: 'Total Students',
+          data: feeStats.map(s => s.total),
+          backgroundColor: grayBar,
+          borderRadius: 4,
+          barPercentage: 0.4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', align: 'end', labels: { color: '#555', font: { size: 11 }, boxWidth: 12, padding: 12 } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tickColor, font: { size: fontSize } } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: fontSize }, stepSize: 1 } }
+      }
+    }
+  });
+}
+
+function renderInsights(insights) {
+  const list = document.getElementById("aiInsightsList");
+  list.innerHTML = "";
+  
+  if (insights.at_risk > 0) {
+    list.innerHTML += `<div class="insight-item"><span class="insight-icon">🔴</span>${insights.at_risk} students classified as At Risk — recommend parent meetings</div>`;
+  }
+  
+  if (insights.top_students.length > 0) {
+    list.innerHTML += `<div class="insight-item"><span class="insight-icon">⭐</span>${insights.top_students.length} students show potential for excellence awards: ${insights.top_students.join(', ')}</div>`;
+  }
+
+  list.innerHTML += `<div class="insight-item"><span class="insight-icon">📈</span>Overall school average is ${insights.at_risk === 0 ? 'improving' : 'stable'} — predictive analysis suggests steady growth</div>`;
+}
+
+// Line chart remains static or can be updated similarly if historical data is available
+new Chart(document.getElementById('areaChart'), {
+  type: 'line',
+  data: {
+    labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+    datasets: [{
+      label: 'Collection',
+      data: [195000, 185000, 210000, 200000, 215000, 255000],
+      borderColor: tealColor,
+      borderWidth: 2,
+      backgroundColor: tealFill,
+      fill: true,
+      tension: 0.45,
+      pointRadius: 3,
+      pointBackgroundColor: tealColor,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: {
+      callbacks: { label: ctx => ' ₹' + (ctx.raw/1000).toFixed(0) + 'K' }
+    }},
+    scales: {
+      x: { grid: { color: gridColor, borderDash: [4,4] }, ticks: { color: tickColor, font: { size: fontSize } } },
+      y: {
+        grid: { color: gridColor, borderDash: [4,4] },
+        ticks: {
+          color: tickColor, font: { size: fontSize },
+          callback: v => '₹' + (v/1000).toFixed(0) + 'K'
+        },
+        min: 0, max: 280000,
+        suggestedTicks: [0, 65000, 130000, 195000, 260000]
+      }
+    }
+  }
+});
+
+// --- Bar Chart ---
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'],
+    datasets: [
+      {
+        label: 'Collected',
+        data: [510000, 460000, 580000, 430000, 620000],
+        backgroundColor: tealColor,
+        borderRadius: 4,
+        barPercentage: 0.4,
+      },
+      {
+        label: 'Target',
+        data: [640000, 540000, 760000, 560000, 700000],
+        backgroundColor: grayBar,
+        borderRadius: 4,
+        barPercentage: 0.4,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top', align: 'end',
+        labels: { color: '#555', font: { size: 11 }, boxWidth: 12, padding: 12 }
+      },
+      tooltip: {
+        callbacks: { label: ctx => ' ₹' + (ctx.raw/1000).toFixed(0) + 'K' }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: tickColor, font: { size: fontSize } } },
+      y: {
+        grid: { color: gridColor },
+        ticks: { color: tickColor, font: { size: fontSize }, callback: v => '₹' + (v/1000).toFixed(0) + 'K' },
+        min: 0, max: 800000
+      }
+    }
+  }
+});
+
+// --- Radar Chart ---
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ['Telugu', 'Hindi', 'English', 'Maths', 'Science', 'Social'],
+    datasets: [{
+      label: 'Class Average',
+      data: [78, 72, 80, 85, 65, 74],
+      borderColor: tealColor,
+      backgroundColor: tealLight,
+      borderWidth: 2,
+      pointBackgroundColor: tealColor,
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: {
+          stepSize: 25,
+          color: '#bbb',
+          font: { size: 10 },
+          backdropColor: 'transparent'
+        },
+        grid: { color: 'rgba(0,0,0,0.08)' },
+        angleLines: { color: 'rgba(0,0,0,0.08)' },
+        pointLabels: { color: '#555', font: { size: 12 } }
+      }
+    }
+  }
+});
+
+// Load real-time analytics
+loadAnalytics();
+</script>
+</body>
+</html>

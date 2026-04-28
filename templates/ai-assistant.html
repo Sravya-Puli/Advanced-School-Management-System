@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Assistant - Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --accent: #2dd4bf;
+      --accent-dark: #14b8a6;
+      --main-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--main-bg); color: var(--text-primary); min-height: 100vh; }
+
+    .topbar { background: #fff; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .topbar h2 { font-size: 18px; font-weight: 600; }
+
+    .main { padding: 40px; max-width: 1000px; margin: 0 auto; }
+    .page-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .page-sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; }
+
+    .chat-card { background: #fff; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); height: 600px; display: flex; flex-direction: column; overflow: hidden; }
+    
+    .chat-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: #fafafa; }
+    .ai-avatar { width: 40px; height: 40px; background: var(--accent); color: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .ai-info h3 { font-size: 16px; font-weight: 600; }
+    .ai-info p { font-size: 12px; color: var(--text-secondary); }
+
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    
+    .msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; position: relative; }
+    .msg.ai { align-self: flex-start; background: #f1f5f9; color: var(--text-primary); border-bottom-left-radius: 4px; }
+    .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+
+    .chat-input-area { padding: 20px 24px; border-top: 1px solid var(--border); display: flex; gap: 12px; background: #fff; }
+    .chat-input { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; outline: none; font-family: inherit; font-size: 14px; transition: border-color 0.2s; }
+    .chat-input:focus { border-color: var(--accent); }
+    .send-btn { background: var(--accent); color: #fff; border: none; padding: 0 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .send-btn:hover { background: var(--accent-dark); }
+
+    .quick-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .chip { padding: 8px 16px; background: #fff; border: 1px solid var(--border); border-radius: 99px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .chip:hover { border-color: var(--accent); color: var(--accent); background: #f0fdfa; }
+
+    .loading-dots { display: flex; gap: 4px; padding: 4px 8px; }
+    .dot { width: 6px; height: 6px; background: #cbd5e1; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <h2>Welcome back, Admin</h2>
+    <button onclick="location.href='/admin'" style="background:none; border:none; cursor:pointer; font-size:18px;">⎋</button>
+  </div>
+
+  <div class="main">
+    <div class="page-title">EduSmart AI Assistant</div>
+    <div class="page-sub">School-wide analytics, performance predictions, and strategic insights</div>
+
+    <div class="quick-chips">
+      <div class="chip" onclick="askAI('Give me a summary of school-wide academic performance.')">📊 Academic Summary</div>
+      <div class="chip" onclick="askAI('Identify classes with the lowest attendance this week.')">📅 Attendance Alerts</div>
+      <div class="chip" onclick="askAI('Analyze the fee collection trend for this quarter.')">💰 Financial Insights</div>
+      <div class="chip" onclick="askAI('Predict overall student success rate for the final exams.')">🎯 Success Prediction</div>
+      <div class="chip" onclick="askAI('Recommend strategies to improve English marks across all grades.')">💡 Improvement Strategy</div>
+    </div>
+
+    <div class="chat-card">
+      <div class="chat-header">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-info">
+          <h3>EduSmart Admin AI</h3>
+          <p>Online • Ready for school analysis</p>
+        </div>
+      </div>
+      
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg ai">
+          Hello Admin! I'm your school's strategic AI assistant. I have access to all student records, teacher allotments, attendance history, and fee data.<br><br>
+          How can I help you analyze the school's performance today?
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="userInput" placeholder="Ask a question about the school..." onkeydown="if(event.key==='Enter') sendMessage()">
+        <button class="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let schoolData = [];
+
+    function initAI() {
+      fetch('/get_full_school_data')
+        .then(res => res.json())
+        .then(data => {
+          schoolData = data;
+          console.log("School data loaded for AI:", schoolData.length, "students found.");
+        });
+    }
+
+    function askAI(question) {
+      document.getElementById('userInput').value = question;
+      sendMessage();
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, 'user');
+      input.value = '';
+
+      // Show loading
+      const loadingId = addLoading();
+
+      // Simulate AI response processing
+      setTimeout(() => {
+        removeLoading(loadingId);
+        generateAIResponse(text);
+      }, 1000);
+    }
+
+    function addMessage(text, role) {
+      const container = document.getElementById('chatMessages');
+      const msg = document.createElement('div');
+      msg.className = `msg ${role}`;
+      msg.innerHTML = text;
+      container.appendChild(msg);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function addLoading() {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'msg ai loading-msg';
+      div.id = 'loading-' + Date.now();
+      div.innerHTML = `<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div.id;
+    }
+
+    function removeLoading(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function generateAIResponse(query) {
+      const q = query.toLowerCase().trim();
+      let response = "";
+
+      if (schoolData.length === 0) {
+        response = "I'm still loading the school database. Please try again in a second! ⏳";
+        addMessage(response, 'ai');
+        return;
+      }
+
+      // 1. Search for Student
+      const sortedData = [...schoolData].sort((a, b) => b.name.length - a.name.length);
+      let student = sortedData.find(s => q.includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(q));
+      
+      if (!student) {
+        const rollMatch = q.match(/\b\d+\b/);
+        if (rollMatch) student = schoolData.find(s => s.roll_no == rollMatch[0]);
+      }
+
+      if (student) {
+        const m = student.marks;
+        const subjects = ['telugu', 'hindi', 'english', 'maths', 'science', 'social'];
+        
+        // Check if marks are actually entered
+        const hasMarks = Object.values(m).some(val => val !== null && val !== 0);
+
+        if (!hasMarks) {
+          response = `<b>Report for ${student.name}:</b><br><br>
+                      • <b>Class:</b> ${student.class} | <b>Roll:</b> ${student.roll_no}<br>
+                      • <b>Attendance:</b> ${student.attendance || '0%'}<br>
+                      • <b>Fee Status:</b> ${student.fee_status || 'Pending'} (${student.pending || '₹0'} due)<br><br>
+                      ⚠️ <b>Academic Note:</b> No subject marks have been recorded for this student yet. <br>
+                      <i>Recommendation: Please ask the assigned teacher to enter the marks in the Teacher Dashboard.</i>`;
+        } else {
+          const marksObj = {
+            telugu: parseInt(m.telugu) || 0,
+            hindi: parseInt(m.hindi) || 0,
+            english: parseInt(m.english) || 0,
+            maths: parseInt(m.maths) || 0,
+            science: parseInt(m.science) || 0,
+            social: parseInt(m.social) || 0
+          };
+
+          const total = Object.values(marksObj).reduce((a, b) => a + b, 0);
+          const avg = (total / subjects.length).toFixed(1);
+          const strongestSub = Object.entries(marksObj).reduce((a, b) => a[1] > b[1] ? a : b);
+          const weakestSub = Object.entries(marksObj).reduce((a, b) => a[1] < b[1] ? a : b);
+
+          response = `<b>Strategic Analysis for ${student.name}:</b><br><br>
+                      • <b>Standing:</b> ${avg}% Average (${student.performance || 'N/A'})<br>
+                      • <b>Attendance:</b> ${student.attendance || '0%'}<br>
+                      • <b>Fee Status:</b> ${student.fee_status || 'Paid'}<br><br>
+                      <b>Subject Breakdown:</b><br>
+                      ────────────────────<br>
+                      📚 Telugu: <b>${marksObj.telugu}</b> | 📚 Hindi: <b>${marksObj.hindi}</b><br>
+                      📚 English: <b>${marksObj.english}</b> | 📚 Maths: <b>${marksObj.maths}</b><br>
+                      📚 Science: <b>${marksObj.science}</b> | 📚 Social: <b>${marksObj.social}</b><br>
+                      ────────────────────<br>
+                      🌟 <b>Insight:</b> ${student.name} is strongest in ${strongestSub[0].toUpperCase()}. <br>
+                      ${avg < 65 ? '⚠️ <b>Alert:</b> Student is currently below the passing threshold. Immediate attention required in ' + weakestSub[0].toUpperCase() + '.' : 'Student is maintaining a healthy academic record.'}`;
+        }
+      } 
+      // ... (rest of class/general logic)
+      else if (q.includes('grade') || q.includes('class') || q.match(/\d+[a-z]?/i)) {
+        const targetClass = q.match(/(\d+[a-z]?)/i);
+        if (targetClass) {
+          const cls = targetClass[0].toUpperCase();
+          const students = schoolData.filter(s => s.class.toUpperCase().includes(cls) || cls.includes(s.class.toUpperCase()));
+          if (students.length > 0) {
+            const avgAtt = (students.reduce((acc, s) => acc + (parseInt(s.attendance) || 0), 0) / students.length).toFixed(1);
+            const atRisk = students.filter(s => s.performance === 'At Risk').length;
+            
+            response = `<b>Class Summary for ${cls}:</b><br><br>
+                        • <b>Enrollment:</b> ${students.length} Students<br>
+                        • <b>Avg Attendance:</b> ${avgAtt}%<br>
+                        • <b>Students At Risk:</b> ${atRisk}<br><br>
+                        Would you like a detailed performance list for this class?`;
+          }
+        }
+      }
+      
+      if (!response) {
+        if (q.includes('attendance')) {
+          const totalAtt = (schoolData.reduce((acc, s) => acc + (parseInt(s.attendance) || 0), 0) / schoolData.length).toFixed(1);
+          response = `Overall school attendance is <b>${totalAtt}%</b>. Grade 10A is leading, while Grade 5A needs focus.`;
+        } else if (q.includes('fee') || q.includes('pending')) {
+          const totalPending = schoolData.reduce((acc, s) => acc + parseFloat(String(s.pending || '0').replace(/[^\d.]/g, '') || 0), 0);
+          response = `Total outstanding school fees: <b>₹${totalPending.toLocaleString()}</b>.`;
+        } else {
+          response = "I can analyze any student's performance, class summaries, or school-wide attendance and fees. Try asking about a specific name!";
+        }
+      }
+
+      addMessage(response, 'ai');
+    }
+
+    // Initialize data on load
+    initAI();
+  </script>
+
+</body>
+</html>

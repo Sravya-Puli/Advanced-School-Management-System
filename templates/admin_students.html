@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Students Management - Admin Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --accent: #2dd4bf;
+      --accent-dark: #14b8a6;
+      --main-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--main-bg); color: var(--text-primary); }
+
+    .layout { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* TOPBAR */
+    .topbar {
+      background: #fff;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar h2 { font-size: 18px; font-weight: 600; }
+    .topbar-right { display: flex; align-items: center; gap: 20px; }
+    .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 20px; position: relative; }
+    .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+
+    /* CONTENT */
+    .content { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+    .page-title h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+    .page-title p { color: var(--text-secondary); font-size: 14px; }
+
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-add:hover { background: var(--accent-dark); }
+
+    /* SEARCH */
+    .search-container { margin-bottom: 24px; position: relative; max-width: 400px; }
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+
+    /* TABLE */
+    .card { background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
+    .students-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .students-table th { padding: 16px 24px; color: var(--text-secondary); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.025em; border-bottom: 1px solid var(--border); background: #fafafa; }
+    .students-table td { padding: 16px 24px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .students-table tr:last-child td { border-bottom: none; }
+
+    .student-info .name { font-weight: 600; display: block; margin-bottom: 2px; }
+    .student-info .email { color: var(--text-secondary); font-size: 12px; }
+
+    /* BADGES */
+    .badge-status { padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; display: inline-block; }
+    
+    /* Performance Colors */
+    .perf-high { background: #ecfdf5; color: #059669; }
+    .perf-average { background: #fffbeb; color: #d97706; }
+    .perf-at-risk { background: #fef2f2; color: #dc2626; }
+
+    /* Fee Status Colors */
+    .fee-paid { background: #ecfdf5; color: #059669; }
+    .fee-partial { background: #fffbeb; color: #d97706; }
+    .fee-pending { background: #fef2f2; color: #dc2626; }
+
+    /* POPUP FORM */
+    #studentModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 32px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    .modal-header { margin-bottom: 24px; }
+    .modal-header h3 { font-size: 20px; font-weight: 700; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary); }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
+    .form-group input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+    .btn-cancel { padding: 10px 20px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; }
+    .btn-submit { padding: 10px 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <header class="topbar">
+    <h2>Welcome back, Admin</h2>
+    <div class="topbar-right">
+      <button class="icon-btn">
+        🔔<span class="badge">3</span>
+      </button>
+      <button class="icon-btn" onclick="location.href='/'">
+        ⎋
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Students</h1>
+        <p>Manage all enrolled students</p>
+      </div>
+      <button class="btn-add" onclick="openModal()">
+        <span>+</span> Add Student
+      </button>
+    </div>
+
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="studentSearch" placeholder="Search students..." onkeyup="filterStudents()">
+    </div>
+
+    <div class="card">
+      <table class="students-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Roll No</th>
+            <th>Attendance</th>
+            <th>Performance</th>
+            <th>Fee Status</th>
+            <th>Pending</th>
+          </tr>
+        </thead>
+        <tbody id="studentsTable">
+          <!-- Data will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STUDENT MODAL -->
+<div id="studentModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add New Student</h3>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="e.g. Aarav Sharma">
+    </div>
+    <div class="form-group">
+      <label>Class</label>
+      <input type="text" id="class" placeholder="e.g. Grade 1-A">
+    </div>
+    <div class="form-group">
+      <label>Roll Number</label>
+      <input type="text" id="roll_no" placeholder="e.g. 101">
+    </div>
+    <div class="form-group">
+      <label>Attendance (%)</label>
+      <input type="text" id="attendance" placeholder="e.g. 96%">
+    </div>
+    <div class="form-group">
+      <label>Performance</label>
+      <input type="text" id="performance" placeholder="e.g. High, Average, At Risk">
+    </div>
+    <div class="form-group">
+      <label>Fee Status</label>
+      <input type="text" id="fee_status" placeholder="e.g. paid, partial, pending">
+    </div>
+    <div class="form-group">
+      <label>Pending Amount</label>
+      <input type="text" id="pending" placeholder="e.g. ₹0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" onclick="addStudent()">Add Student</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allStudents = [];
+
+function openModal() {
+  document.getElementById("studentModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("studentModal").style.display = "none";
+}
+
+function addStudent() {
+  const name = document.getElementById("name").value;
+  const studentClass = document.getElementById("class").value;
+
+  fetch("/add_student", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: name,
+      class: studentClass,
+      roll_no: document.getElementById("roll_no").value,
+      attendance: document.getElementById("attendance").value,
+      performance: document.getElementById("performance").value,
+      fee_status: document.getElementById("fee_status").value,
+      pending: document.getElementById("pending").value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      closeModal();
+      loadStudents();
+    } else {
+      alert(data.message);
+    }
+  });
+}
+
+function loadStudents() {
+  fetch("/get_all_students")
+  .then(res => res.json())
+  .then(data => {
+    allStudents = data;
+    renderStudents(data);
+  });
+}
+
+function renderStudents(students) {
+  const table = document.getElementById("studentsTable");
+  table.innerHTML = "";
+
+  students.forEach(s => {
+    const perfClass = s.performance.toLowerCase().includes('high') ? 'perf-high' : 
+                     s.performance.toLowerCase().includes('risk') ? 'perf-at-risk' : 'perf-average';
+    
+    const feeClass = s.fee_status.toLowerCase().includes('paid') ? 'fee-paid' :
+                    s.fee_status.toLowerCase().includes('partial') ? 'fee-partial' : 'fee-pending';
+
+    const email = s.name.toLowerCase().replace(' ', '.') + '@school.com';
+
+    table.innerHTML += `
+      <tr>
+        <td>
+          <div class="student-info">
+            <span class="name">${s.name}</span>
+            <span class="email">${email}</span>
+          </div>
+        </td>
+        <td>${s.class}</td>
+        <td>${s.roll_no || '-'}</td>
+        <td>${s.attendance || '-'}</td>
+        <td>
+          <span class="badge-status ${perfClass}">${s.performance || 'N/A'}</span>
+        </td>
+        <td>
+          <span class="badge-status ${feeClass}">${s.fee_status || 'N/A'}</span>
+        </td>
+        <td>${s.pending || '₹0'}</td>
+      </tr>
+    `;
+  });
+}
+
+function filterStudents() {
+  const query = document.getElementById("studentSearch").value.toLowerCase();
+  const filtered = allStudents.filter(s => 
+    s.name.toLowerCase().includes(query) || 
+    s.class.toLowerCase().includes(query) || 
+    s.roll_no.toLowerCase().includes(query)
+  );
+  renderStudents(filtered);
+}
+
+// Initial load
+loadStudents();
+</script>
+
+</body>
+</html>
